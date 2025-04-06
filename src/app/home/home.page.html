@@ -8,18 +8,25 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-searchbar [(ngModel)]="city" (ionChange)="searchCity()"></ion-searchbar>
+  <div class="map-container">
+    <div id="map" style="height: 50vh;"></div>
+  </div>
 
-  <ion-card *ngIf="weather">
-    <ion-card-header>
-      <ion-card-title>{{ weather.name }}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      Temp: {{ weather.main.temp }}° <br />
-      Humidity: {{ weather.main.humidity }}% <br />
-      Wind: {{ weather.wind.speed }} m/s
-    </ion-card-content>
-  </ion-card>
+  <div *ngIf="showInfo" class="info-container">
+    <ion-searchbar [(ngModel)]="city" (ionChange)="searchCity()"></ion-searchbar>
+
+    <ion-card *ngIf="weather" class="weather-card">
+      <ion-card-header>
+        <ion-card-title>{{ weather.name }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        Temp: {{ weather.main.temp }}° <br />
+        Humidity: {{ weather.main.humidity }}% <br />
+        Wind: {{ weather.wind.speed }} m/s
+      </ion-card-content>
+      <ion-button (click)="closeInfo()" fill="clear" class="close-button">X</ion-button>
+    </ion-card>
+  </div>
 
   <ion-button expand="block" (click)="toggleUnits()">
     Toggle °C/°F (Current: {{ units === 'metric' ? 'Celsius' : 'Fahrenheit' }})

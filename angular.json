@@ -10,9 +10,7 @@
       "sourceRoot": "src",
       "prefix": "app",
       "architect": {
-        "build": {"allowedCommonJsDependencies": [
-  "localforage"
-]
+        "build": {"allowedCommonJsDependencies": ["localforage", "leaflet"]
 ,
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
