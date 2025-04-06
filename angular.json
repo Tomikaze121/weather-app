@@ -10,7 +10,10 @@
       "sourceRoot": "src",
       "prefix": "app",
       "architect": {
-        "build": {
+        "build": {"allowedCommonJsDependencies": [
+  "localforage"
+]
+,
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "www",
@@ -136,7 +139,8 @@
   "cli": {
     "schematicCollections": [
       "@ionic/angular-toolkit"
-    ]
+    ],
+    "analytics": false
   },
   "schematics": {
     "@ionic/angular-toolkit:component": {
