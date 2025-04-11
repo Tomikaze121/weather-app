@@ -22,7 +22,7 @@ export class WeatherService {
       lon: coordinates.coords.longitude
     };
   }
-  
+
   async isOnline(): Promise<boolean> {
     const status = await Network.getStatus();
     return status.connected;
@@ -57,17 +57,19 @@ export class WeatherService {
 
   // THEME TOGGLE FUNCTIONS ↓↓↓ inside the class
 
-  async toggleTheme(isDark: boolean) {
-    document.body.setAttribute('color-theme', isDark ? 'dark' : 'light');
-    await Preferences.set({
-      key: 'theme',
-      value: isDark ? 'dark' : 'light'
-    });
-  }
+async toggleTheme(isDark: boolean) {
+  document.body.setAttribute('color-theme', isDark ? 'dark' : 'light');
+  await Preferences.set({
+    key: 'theme',
+    value: isDark ? 'dark' : 'light'
+  });
+}
 
-  async loadSavedTheme() {
-    const { value } = await Preferences.get({ key: 'theme' });
-    document.body.setAttribute('color-theme', value || 'light');
-  }
+
+async loadSavedTheme() {
+  const { value } = await Preferences.get({ key: 'theme' });
+  document.body.setAttribute('color-theme', value || 'light');
+}
+
 
 }

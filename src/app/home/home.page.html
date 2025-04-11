@@ -21,14 +21,14 @@
 
 <ion-content class="ion-padding">
 
-  <ion-searchbar 
-    [formControl]="searchControl" 
-    placeholder="Search city..." 
-    (ionClear)="loadWeatherByCurrentLocation()" 
+  <ion-searchbar
+    [formControl]="searchControl"
+    placeholder="Search city..."
+    (ionClear)="loadWeatherByCurrentLocation()"
     (ionChange)="searchWeather()">
   </ion-searchbar>
 
-  <div *ngIf="currentWeather">
+  <div *ngIf="currentWeather" class="weather-info">
     <h2>{{ currentWeather.name }}</h2>
     <h1>{{ currentWeather.main.temp }} {{ isCelsius ? '°C' : '°F' }}</h1>
     <p>Humidity: {{ currentWeather.main.humidity }}%</p>
@@ -41,10 +41,14 @@
     </ion-card>
   </div>
 
-  <h3>5-Day Forecast</h3>
+  <h3 style="text-align: center; margin-top: 20px;">5-Day Forecast</h3>
 
   <ion-list>
     <ion-item *ngFor="let item of forecast">
+      <ion-avatar slot="start">
+        <img src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
+      </ion-avatar>
+
       <ion-label>
         <h2>{{ item.dt_txt }}</h2>
         <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>

@@ -24,9 +24,12 @@ export class HomePage implements OnInit {
   ) {}
 
   async ngOnInit() {
+    await this.weatherService.loadSavedTheme();
     await this.loadSettings();
     await this.loadWeatherByCurrentLocation();
+    this.checkTheme();
   }
+  
 
   async loadSettings() {
     const unit = await this.weatherService.getCachedWeatherData('unit');
@@ -94,14 +97,17 @@ export class HomePage implements OnInit {
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode;
     this.weatherService.toggleTheme(this.isDarkMode);
+    this.checkTheme(); 
   }
+  
   
   toggleUnits() {
     this.isCelsius = !this.isCelsius;
     const unit = this.isCelsius ? 'metric' : 'imperial';
     this.weatherService.cacheWeatherData('unit', unit);
-    this.loadWeatherByCurrentLocation();
+    this.loadWeatherByCurrentLocation();  
   }
+  
 
   toggleAlerts() {
     this.alertsEnabled = !this.alertsEnabled;
