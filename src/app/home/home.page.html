@@ -9,7 +9,7 @@
 
 <ion-content class="ion-padding">
   <div class="map-container">
-    <div id="map" style="height: 50vh;"></div>
+    <div id="map"></div>
   </div>
 
   <div *ngIf="showInfo" class="info-container">
@@ -31,10 +31,11 @@
   <ion-button expand="block" (click)="toggleUnits()">
     Toggle °C/°F (Current: {{ units === 'metric' ? 'Celsius' : 'Fahrenheit' }})
   </ion-button>
-
+<div class="scroll">
   <ion-list *ngIf="forecast?.list">
     <ion-item *ngFor="let hour of forecast.list.slice(0, 6)">
       {{ hour.dt_txt }} — {{ hour.main.temp }}°
     </ion-item>
   </ion-list>
+</div>
 </ion-content>

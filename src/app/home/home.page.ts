@@ -43,6 +43,10 @@ export class HomePage implements AfterViewInit {
       await this.getWeatherByCoords(lat, lon);
       this.showInfo = true;
     });
+
+    setTimeout(() => {
+      this.map.invalidateSize();
+    }, 300);
   }
 
   async getWeatherByCoords(lat: number, lon: number) {
