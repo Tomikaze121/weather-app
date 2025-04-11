@@ -1,0 +1,35 @@
+ion-content {
+    --background: #0f2d25;  /* Dark Green Background */
+    color: #e0f2f1;         /* Mint Light Text */
+    padding: 10px;
+  }
+  
+  ion-header, ion-toolbar {
+    --background: #124734; /* Toolbar Darker Green */
+    --color: #e0f2f1;
+  }
+  
+  ion-item {
+    --background: #1d4e3f;  /* Card-Like Green */
+    color: #e0f2f1;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 10px;
+  }
+  
+  ion-label {
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  
+  ion-toggle {
+    --handle-background-checked: #4caf50; /* Active Leaf Green */
+    --handle-background: #ccc;
+    --track-background-checked: #2e7d32;
+  }
+  
+  h1, h2, h3, p {
+    color: #e0f2f1;
+    text-align: center;
+  }
+  

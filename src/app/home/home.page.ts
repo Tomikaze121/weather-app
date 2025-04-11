@@ -1,116 +1,119 @@
-import * as L from 'leaflet';
-import { Component, AfterViewInit } from '@angular/core';
-import { GeolocationService } from '../services/geolocation.service';
+import { Component, OnInit } from '@angular/core';
+import { WeatherService } from '../services/weather.service';
+import { FormControl } from '@angular/forms';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
-  templateUrl: './home.page.html',
-  styleUrls: ['./home.page.scss'],
   standalone: false,
+  templateUrl: './home.page.html',
+  styleUrls: ['./home.page.scss']
 })
-export class HomePage implements AfterViewInit {
-  city: string = '';
-  weather: any = null;
-  forecast: any = null;
-  units: string = 'metric';
-  map: any;
-  showInfo: boolean = false;
+export class HomePage implements OnInit {
 
-  constructor(private geo: GeolocationService) {}
+  searchControl = new FormControl('');
+  currentWeather: any;
+  forecast: any[] = [];
+  isCelsius: boolean = true;
+  alertsEnabled: boolean = true;
+  isDarkMode: boolean = false;
 
-  ngAfterViewInit() {
-    this.initMap();
+  constructor(
+    private weatherService: WeatherService,
+    private toastCtrl: ToastController
+  ) {}
+
+  async ngOnInit() {
+    await this.loadSettings();
+    await this.loadWeatherByCurrentLocation();
   }
 
-  async initMap() {
-    const coords = await this.geo.getCurrentPosition();
+  async loadSettings() {
+    const unit = await this.weatherService.getCachedWeatherData('unit');
+    const alert = await this.weatherService.getCachedWeatherData('alerts');
 
-    this.map = L.map('map').setView([coords.lat, coords.lon], 10);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(this.map);
-
-    const userMarker = L.marker([coords.lat, coords.lon]).addTo(this.map);
-    userMarker.bindPopup('You are here!').openPopup();
-
-    this.map.on('click', async (e: any) => {
-      const lat = e.latlng.lat;
-      const lon = e.latlng.lng;
-
-      this.map.setView([lat, lon], 12);
-      L.marker([lat, lon]).addTo(this.map);
-      await this.getWeatherByCoords(lat, lon);
-      this.showInfo = true;
-    });
-
-    setTimeout(() => {
-      this.map.invalidateSize();
-    }, 300);
+    this.isCelsius = unit !== 'imperial';
+    this.alertsEnabled = alert !== false;
   }
 
-  async getWeatherByCoords(lat: number, lon: number) {
+  async loadWeatherByCurrentLocation() {
     try {
-      const apiKey = '517f17413098b75a13391587d7610c52';
-
-      const weatherResponse = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${this.units}&appid=${apiKey}`
-      );
-      this.weather = await weatherResponse.json();
-
-      const forecastResponse = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${this.units}&appid=${apiKey}`
-      );
-      this.forecast = await forecastResponse.json();
+      const coords = await this.weatherService.getCurrentLocation();
+      await this.loadWeather(coords.lat, coords.lon);
     } catch (error) {
-      console.error('Weather fetch error:', error);
+      this.showToast('Failed to get location.');
     }
   }
 
-  async searchCity() {
-    if (!this.city) return;
+  async searchWeather() {
+    const city = this.searchControl.value;
+    if (!city) {
+      this.showToast('Please enter a city name.');
+      return;
+    }
 
     try {
-      const apiKey = '517f17413098b75a13391587d7610c52';
-
-      
-      const geoResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${this.city},PH&limit=1&appid=${apiKey}`);
-      const geoData = await geoResponse.json();
-
-      if (geoData.length === 0) {
-        console.error('No location found for the specified city.');
-        return;
-      }
-
-      const selectedLocation = geoData[0];
-      const lat = selectedLocation.lat;
-      const lon = selectedLocation.lon;
-
-      if (lat && lon) {
-        this.map.setView([lat, lon], 12);
-        L.marker([lat, lon]).addTo(this.map);
-        await this.getWeatherByCoords(lat, lon);
-        this.showInfo = true;
-      }
+      const geo: any = await this.weatherService.getGeoByCity(city);
+      await this.loadWeather(geo.lat, geo.lon);
     } catch (error) {
-      console.error('City search error:', error);
+      this.showToast('City not found.');
     }
   }
 
-  closeInfo() {
-    this.showInfo = false;
+  async loadWeather(lat: number, lon: number) {
+    const online = await this.weatherService.isOnline();
+  
+    if (online) {
+      // ONLINE → Fetch API
+      this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon).toPromise();
+      const forecastData: any = await this.weatherService.getForecastByCoords(lat, lon).toPromise();
+      this.forecast = forecastData.list.slice(0, 5); 
+  
+      await this.weatherService.cacheWeatherData('lastWeatherData', {
+        currentWeather: this.currentWeather,
+        forecast: this.forecast,
+      });
+    } else {
+      // OFFLINE → Load Cache
+      const cached = await this.weatherService.getCachedWeatherData('lastWeatherData');
+      if (cached) {
+        this.currentWeather = cached.currentWeather;
+        this.forecast = cached.forecast;
+        this.showToast('Offline Mode: Loaded Cached Weather');
+      } else {
+        this.showToast('Offline Mode: No Cached Data');
+      }
+    }
   }
-
+  
+  checkTheme() {
+    const currentTheme = document.body.getAttribute('color-theme');
+    this.isDarkMode = currentTheme === 'dark';
+  }
+  
   toggleTheme() {
-    document.body.classList.toggle('dark');
+    this.isDarkMode = !this.isDarkMode;
+    this.weatherService.toggleTheme(this.isDarkMode);
+  }
+  
+  toggleUnits() {
+    this.isCelsius = !this.isCelsius;
+    const unit = this.isCelsius ? 'metric' : 'imperial';
+    this.weatherService.cacheWeatherData('unit', unit);
+    this.loadWeatherByCurrentLocation();
   }
 
-  toggleUnits() {
-    this.units = this.units === 'metric' ? 'imperial' : 'metric';
-    if (this.weather) {
-      const lat = this.weather.coord.lat;
-      const lon = this.weather.coord.lon;
-      this.getWeatherByCoords(lat, lon);
-    }
+  toggleAlerts() {
+    this.alertsEnabled = !this.alertsEnabled;
+    this.weatherService.cacheWeatherData('alerts', this.alertsEnabled);
+  }
+
+  async showToast(msg: string) {
+    const toast = await this.toastCtrl.create({
+      message: msg,
+      duration: 2000,
+      position: 'top'
+    });
+    await toast.present();
   }
 }
