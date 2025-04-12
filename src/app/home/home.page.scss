@@ -1,19 +1,15 @@
-ion-content {
-  --background: #0f2d25;  
-  color: #e0f2f1;         
-}
-
-h1, h2, h3, p {
-  text-align: center;
-  color: #e0f2f1;  
-  margin: 6px 0;
-}
-
+/* Header & Toolbar */
 ion-toolbar {
-  --background: #124734; 
+  --background: #124734;  
   --color: #e0f2f1;
 }
 
+ion-title {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Searchbar Design */
 ion-searchbar {
   --background: #1d4e3f;
   --color: #e0f2f1;
@@ -21,28 +17,47 @@ ion-searchbar {
   margin-bottom: 10px;
 }
 
-.weather-card {
-  background: #1d4e3f; 
-  padding: 15px;
-  border-radius: 15px;
-  margin: 10px;
+/* Current Weather Info Centered */
+.weather-info {
   text-align: center;
-  color: #e0f2f1;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-top: 15px;
 }
 
-ion-list, ion-item {
+h1, h2, h3, p {
+  color: #e0f2f1;
+  text-align: center;
+  margin: 5px 0;
+}
+
+/* Weather Forecast Card */
+ion-list {
+  background: #1d4e3f;
+  border-radius: 15px;
+  padding: 10px;
+  margin-top: 15px;
+}
+
+ion-item {
   --background: transparent;
   color: #e0f2f1;
 }
 
-ion-toggle {
-  --handle-background-checked: #4caf50;
-  --handle-background: #ccc;
+/* Weather Icons */
+ion-avatar img {
+  width: 50px;
+  height: 50px;
 }
 
+/* Severe Alert Card */
 ion-card-header {
   color: #ff8a80;
   font-weight: bold;
   text-align: center;
+}
+
+/* Toggle Design */
+ion-toggle {
+  --handle-background-checked: #4caf50;
+  --handle-background: #ccc;
+  --track-background-checked: #2e7d32;
 }

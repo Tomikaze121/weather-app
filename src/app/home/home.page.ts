@@ -14,9 +14,11 @@ export class HomePage implements OnInit {
   searchControl = new FormControl('');
   currentWeather: any;
   forecast: any[] = [];
+  hourlyForecast: any[] = [];
   isCelsius: boolean = true;
   alertsEnabled: boolean = true;
   isDarkMode: boolean = false;
+  unitType: string = 'metric';
 
   constructor(
     private weatherService: WeatherService,
@@ -29,14 +31,19 @@ export class HomePage implements OnInit {
     await this.loadWeatherByCurrentLocation();
     this.checkTheme();
   }
-  
 
   async loadSettings() {
     const unit = await this.weatherService.getCachedWeatherData('unit');
     const alert = await this.weatherService.getCachedWeatherData('alerts');
 
     this.isCelsius = unit !== 'imperial';
+    this.unitType = this.isCelsius ? 'metric' : 'imperial';
     this.alertsEnabled = alert !== false;
+  }
+
+  checkTheme() {
+    const currentTheme = document.body.getAttribute('color-theme');
+    this.isDarkMode = currentTheme === 'dark';
   }
 
   async loadWeatherByCurrentLocation() {
@@ -65,53 +72,57 @@ export class HomePage implements OnInit {
 
   async loadWeather(lat: number, lon: number) {
     const online = await this.weatherService.isOnline();
-  
+
     if (online) {
-      // ONLINE → Fetch API
-      this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon).toPromise();
-      const forecastData: any = await this.weatherService.getForecastByCoords(lat, lon).toPromise();
-      this.forecast = forecastData.list.slice(0, 5); 
-  
+      this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon, this.unitType).toPromise();
+      const forecastData: any = await this.weatherService.getForecastByCoords(lat, lon, this.unitType).toPromise();
+
+      // Real 5-Day Forecast (12:00PM only)
+      this.forecast = forecastData.list.filter((item: any) =>
+        item.dt_txt.includes('12:00:00')
+      );
+
+      // Hourly Forecast (Today Only)
+      const today = new Date().toISOString().split('T')[0];
+      this.hourlyForecast = forecastData.list.filter((item: any) =>
+        item.dt_txt.startsWith(today)
+      );
+
       await this.weatherService.cacheWeatherData('lastWeatherData', {
         currentWeather: this.currentWeather,
         forecast: this.forecast,
+        hourlyForecast: this.hourlyForecast
       });
+
     } else {
-      // OFFLINE → Load Cache
       const cached = await this.weatherService.getCachedWeatherData('lastWeatherData');
       if (cached) {
         this.currentWeather = cached.currentWeather;
         this.forecast = cached.forecast;
+        this.hourlyForecast = cached.hourlyForecast;
         this.showToast('Offline Mode: Loaded Cached Weather');
       } else {
         this.showToast('Offline Mode: No Cached Data');
       }
     }
   }
-  
-  checkTheme() {
-    const currentTheme = document.body.getAttribute('color-theme');
-    this.isDarkMode = currentTheme === 'dark';
-  }
-  
-  toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
-    this.weatherService.toggleTheme(this.isDarkMode);
-    this.checkTheme(); 
-  }
-  
-  
+
   toggleUnits() {
     this.isCelsius = !this.isCelsius;
-    const unit = this.isCelsius ? 'metric' : 'imperial';
-    this.weatherService.cacheWeatherData('unit', unit);
-    this.loadWeatherByCurrentLocation();  
+    this.unitType = this.isCelsius ? 'metric' : 'imperial';
+    this.weatherService.cacheWeatherData('unit', this.unitType);
+    this.loadWeatherByCurrentLocation();
   }
-  
 
   toggleAlerts() {
     this.alertsEnabled = !this.alertsEnabled;
     this.weatherService.cacheWeatherData('alerts', this.alertsEnabled);
+  }
+
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    this.weatherService.toggleTheme(this.isDarkMode);
+    this.checkTheme();
   }
 
   async showToast(msg: string) {
@@ -122,4 +133,5 @@ export class HomePage implements OnInit {
     });
     await toast.present();
   }
+
 }

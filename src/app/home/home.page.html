@@ -56,4 +56,19 @@
     </ion-item>
   </ion-list>
 
+  <h3 style="text-align: center; margin-top: 20px;">Hourly Forecast (Today)</h3>
+
+  <ion-list>
+    <ion-item *ngFor="let item of hourlyForecast">
+      <ion-avatar slot="start">
+        <img src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
+      </ion-avatar>
+
+      <ion-label>
+        <h2>{{ item.dt_txt.split(' ')[1] }}</h2>
+        <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
 </ion-content>

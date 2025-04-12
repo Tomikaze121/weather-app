@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Geolocation } from '@capacitor/geolocation';
-import { Network } from '@capacitor/network';
 import { Preferences } from '@capacitor/preferences';
+import { Network } from '@capacitor/network';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +15,7 @@ export class WeatherService {
 
   constructor(private http: HttpClient) { }
 
+  // GET CURRENT LOCATION
   async getCurrentLocation() {
     const coordinates = await Geolocation.getCurrentPosition();
     return {
@@ -23,20 +24,23 @@ export class WeatherService {
     };
   }
 
+  // CHECK INTERNET CONNECTION
   async isOnline(): Promise<boolean> {
     const status = await Network.getStatus();
     return status.connected;
   }
-  
 
-  getWeatherByCoords(lat: number, lon: number) {
-    return this.http.get(`${this.apiUrl}weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`);
+  // GET WEATHER DATA BY COORDS
+  getWeatherByCoords(lat: number, lon: number, unit: string) {
+    return this.http.get(`${this.apiUrl}weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=${unit}`);
   }
 
-  getForecastByCoords(lat: number, lon: number) {
-    return this.http.get(`${this.apiUrl}forecast?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`);
+  // GET FORECAST DATA BY COORDS
+  getForecastByCoords(lat: number, lon: number, unit: string) {
+    return this.http.get(`${this.apiUrl}forecast?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=${unit}`);
   }
 
+  // SEARCH LOCATION BY CITY NAME
   getGeoByCity(city: string) {
     return this.http.get(`${this.geoUrl}?q=${city}&limit=1&appid=${this.apiKey}`)
       .toPromise()
@@ -46,30 +50,30 @@ export class WeatherService {
       });
   }
 
+  // CACHE DATA LOCALLY
   async cacheWeatherData(key: string, data: any) {
     await Preferences.set({ key, value: JSON.stringify(data) });
   }
 
+  // GET CACHED DATA
   async getCachedWeatherData(key: string) {
     const { value } = await Preferences.get({ key });
     return value ? JSON.parse(value) : null;
   }
 
-  // THEME TOGGLE FUNCTIONS ↓↓↓ inside the class
+  // DARK/LIGHT MODE TOGGLE
+  async toggleTheme(isDark: boolean) {
+    document.body.setAttribute('color-theme', isDark ? 'dark' : 'light');
+    await Preferences.set({
+      key: 'theme',
+      value: isDark ? 'dark' : 'light'
+    });
+  }
 
-async toggleTheme(isDark: boolean) {
-  document.body.setAttribute('color-theme', isDark ? 'dark' : 'light');
-  await Preferences.set({
-    key: 'theme',
-    value: isDark ? 'dark' : 'light'
-  });
-}
-
-
-async loadSavedTheme() {
-  const { value } = await Preferences.get({ key: 'theme' });
-  document.body.setAttribute('color-theme', value || 'light');
-}
-
+  // LOAD SAVED THEME
+  async loadSavedTheme() {
+    const { value } = await Preferences.get({ key: 'theme' });
+    document.body.setAttribute('color-theme', value || 'light');
+  }
 
 }
