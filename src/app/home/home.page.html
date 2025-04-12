@@ -1,17 +1,21 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Weather App</ion-title>
 
+    <ion-buttons slot="start">
+      <ion-title>Weather App</ion-title>
+    </ion-buttons>
+
+  
     <ion-buttons slot="end">
-      <ion-button (click)="toggleUnits()">
+      <ion-button size="small" (click)="toggleUnits()">
         {{ isCelsius ? '°C' : '°F' }}
       </ion-button>
 
-      <ion-button (click)="toggleTheme()">
+      <ion-button size="small" (click)="toggleTheme()">
         <ion-icon [name]="isDarkMode ? 'moon' : 'sunny'"></ion-icon>
       </ion-button>
 
-      <ion-button (click)="toggleAlerts()">
+      <ion-button size="small" (click)="toggleAlerts()">
         <ion-icon [name]="alertsEnabled ? 'notifications' : 'notifications-off'"></ion-icon>
       </ion-button>
     </ion-buttons>
