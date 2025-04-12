@@ -1,23 +1,41 @@
+/* SAFE TOP for Status Bar */
+ion-header {
+  padding-top: env(safe-area-inset-top);
+}
 
-
+/* Toolbar Design */
 ion-toolbar {
   --background: #124734;
   --color: #e0f2f1;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
+/* Title Text */
 ion-title {
   font-weight: bold;
   letter-spacing: 1px;
   font-size: 20px;
 }
 
+/* Top Buttons Style */
 ion-button {
   font-size: 12px;
 }
 
+
+/* Search Bar Style */
+ion-searchbar {
+  --background: #1d4e3f;
+  --color: #e0f2f1;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* Current Weather Display */
 .weather-info {
   text-align: center;
   margin-top: 15px;
@@ -29,13 +47,7 @@ h1, h2, h3, p {
   margin: 5px 0;
 }
 
-ion-searchbar {
-  --background: #1d4e3f;
-  --color: #e0f2f1;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
+/* List Cards for Forecast */
 ion-list {
   background: #1d4e3f;
   border-radius: 15px;
@@ -48,17 +60,20 @@ ion-item {
   color: #e0f2f1;
 }
 
+/* Weather Icon Size */
 ion-avatar img {
   width: 50px;
   height: 50px;
 }
 
+/* Alert Card */
 ion-card-header {
   color: #ff8a80;
   font-weight: bold;
   text-align: center;
 }
 
+/* Toggle Style */
 ion-toggle {
   --handle-background-checked: #4caf50;
   --handle-background: #ccc;
