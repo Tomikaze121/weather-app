@@ -1,28 +1,41 @@
 import { Component, OnInit } from '@angular/core';
 import { WeatherService } from '../services/weather.service';
 import { FormControl } from '@angular/forms';
-import { ToastController } from '@ionic/angular';
+import { ToastController, LoadingController } from '@ionic/angular';
+
+interface WeatherItem {
+  dt_txt: string;
+  weather: { main: string; description: string; icon: string }[];
+  main: { temp: number; humidity: number };
+  wind: { speed: number };
+  localTime?: string;
+}
 
 @Component({
   selector: 'app-home',
-  standalone: false,
   templateUrl: './home.page.html',
-  styleUrls: ['./home.page.scss']
+  styleUrls: ['./home.page.scss'],
+  standalone: false,
 })
 export class HomePage implements OnInit {
-
   searchControl = new FormControl('');
   currentWeather: any;
-  forecast: any[] = [];
-  hourlyForecast: any[] = [];
-  isCelsius: boolean = true;
-  alertsEnabled: boolean = true;
-  isDarkMode: boolean = false;
-  unitType: string = 'metric';
+  forecast: WeatherItem[] = [];
+  hourlyForecast: WeatherItem[] = [];
+  hourlyGroups: { period: string, data: WeatherItem[] }[] = [];
+  hourPage = 1;
+  hourLimit = 8;
+
+  isCelsius = true;
+  alertsEnabled = true;
+  isDarkMode = false;
+  unitType = 'metric';
+  backgroundClass = 'default-bg';
 
   constructor(
     private weatherService: WeatherService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController
   ) {}
 
   async ngOnInit() {
@@ -35,7 +48,6 @@ export class HomePage implements OnInit {
   async loadSettings() {
     const unit = await this.weatherService.getCachedWeatherData('unit');
     const alert = await this.weatherService.getCachedWeatherData('alerts');
-
     this.isCelsius = unit !== 'imperial';
     this.unitType = this.isCelsius ? 'metric' : 'imperial';
     this.alertsEnabled = alert !== false;
@@ -50,61 +62,141 @@ export class HomePage implements OnInit {
     try {
       const coords = await this.weatherService.getCurrentLocation();
       await this.loadWeather(coords.lat, coords.lon);
-    } catch (error) {
+    } catch {
       this.showToast('Failed to get location.');
     }
   }
 
   async searchWeather() {
     const city = this.searchControl.value;
-    if (!city) {
-      this.showToast('Please enter a city name.');
-      return;
-    }
+    if (!city) return this.showToast('Please enter a city name.');
+
+    const loader = await this.loadingCtrl.create({ message: 'Loading weather...', spinner: 'crescent' });
+    await loader.present();
 
     try {
-      const geo: any = await this.weatherService.getGeoByCity(city);
+      const geo = await this.weatherService.getGeoByCity(city);
       await this.loadWeather(geo.lat, geo.lon);
-    } catch (error) {
-      this.showToast('City not found.');
+    } catch {
+      this.showToast('City not found or API failed.');
+    } finally {
+      await loader.dismiss();
     }
   }
 
   async loadWeather(lat: number, lon: number) {
+    const loader = await this.loadingCtrl.create({ message: 'Loading weather...', spinner: 'crescent' });
+    await loader.present();
+
     const online = await this.weatherService.isOnline();
 
     if (online) {
-      this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon, this.unitType).toPromise();
-      const forecastData: any = await this.weatherService.getForecastByCoords(lat, lon, this.unitType).toPromise();
+      try {
+        this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon, this.unitType).toPromise();
+        this.currentWeather.flagUrl = `https://flagcdn.com/48x36/${this.currentWeather.sys.country.toLowerCase()}.png`;
+        this.currentWeather.advice = this.generateAdvice(this.currentWeather);
+        this.backgroundClass = this.getBackgroundClass(this.currentWeather.weather[0].main);
 
-      // Real 5-Day Forecast (12:00PM only)
-      this.forecast = forecastData.list.filter((item: any) =>
-        item.dt_txt.includes('12:00:00')
-      );
+        this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000 + this.currentWeather.timezone * 1000)
+          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000 + this.currentWeather.timezone * 1000)
+          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Hourly Forecast (Today Only)
-      const today = new Date().toISOString().split('T')[0];
-      this.hourlyForecast = forecastData.list.filter((item: any) =>
-        item.dt_txt.startsWith(today)
-      );
+        const forecastData = await this.weatherService.getForecastByCoords(lat, lon, this.unitType).toPromise() as { list: WeatherItem[] };
+        this.forecast = forecastData.list.filter(item => item.dt_txt.includes('12:00:00'));
 
-      await this.weatherService.cacheWeatherData('lastWeatherData', {
-        currentWeather: this.currentWeather,
-        forecast: this.forecast,
-        hourlyForecast: this.hourlyForecast
-      });
+        this.hourlyForecast = forecastData.list;
+        this.hourPage = 1;
+        this.updateHourlyPage();
 
+        await this.weatherService.cacheWeatherData('lastWeatherData', {
+          currentWeather: this.currentWeather,
+          forecast: this.forecast,
+          hourlyForecast: this.hourlyForecast
+        });
+
+      } catch (err) {
+        this.showToast('Failed to load weather data.');
+      }
     } else {
       const cached = await this.weatherService.getCachedWeatherData('lastWeatherData');
       if (cached) {
         this.currentWeather = cached.currentWeather;
         this.forecast = cached.forecast;
         this.hourlyForecast = cached.hourlyForecast;
+        this.updateHourlyPage();
         this.showToast('Offline Mode: Loaded Cached Weather');
       } else {
         this.showToast('Offline Mode: No Cached Data');
       }
     }
+
+    await loader.dismiss();
+  }
+
+  getForecastColor(main: string): string {
+    switch (main.toLowerCase()) {
+      case 'clear': return 'card-sunny';
+      case 'clouds': return 'card-cloudy';
+      case 'rain': return 'card-rain';
+      case 'snow': return 'card-snow';
+      case 'thunderstorm': return 'card-thunder';
+      default: return 'card-default';
+    }
+  }
+  
+  updateHourlyPage() {
+    const start = 0;
+    const end = this.hourPage * this.hourLimit;
+    const sliced = this.hourlyForecast.slice(start, end);
+    const grouped: { [key: string]: WeatherItem[] } = { AM: [], PM: [] };
+
+    sliced.forEach((item: WeatherItem) => {
+      const utcDate = new Date(item.dt_txt);
+      const offsetMs = this.currentWeather.timezone * 1000;
+      const localDate = new Date(utcDate.getTime() + offsetMs);
+      const hour = localDate.getHours();
+      const label = hour < 12 ? 'AM' : 'PM';
+      item.localTime = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      grouped[label].push(item);
+    });
+
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local Time';
+    this.hourlyGroups = [
+      { period: `AM (${tz})`, data: grouped['AM'] },
+      { period: `PM (${tz})`, data: grouped['PM'] }
+    ];
+  }
+
+  loadMoreHourly() {
+    this.hourPage++;
+    this.updateHourlyPage();
+  }
+
+  canLoadMoreHours(): boolean {
+    const flat = [...(this.hourlyGroups[0]?.data || []), ...(this.hourlyGroups[1]?.data || [])];
+    return flat.length < this.hourlyForecast.length;
+  }
+
+  getBackgroundClass(main: string): string {
+    switch (main.toLowerCase()) {
+      case 'clear': return 'bg-clear';
+      case 'clouds': return 'bg-cloudy';
+      case 'rain': return 'bg-rain';
+      case 'snow': return 'bg-snow';
+      case 'thunderstorm': return 'bg-thunder';
+      default: return 'default-bg';
+    }
+  }
+
+  generateAdvice(weather: any): string {
+    const desc = weather.weather[0].description;
+    const temp = weather.main.temp;
+    if (desc.includes('rain')) return '🌧️ Bring an umbrella!';
+    if (desc.includes('clear') && temp > 30) return '☀️ Stay hydrated!';
+    if (desc.includes('snow')) return '❄️ Bundle up!';
+    if (temp <= 15) return '🧥 Wear something warm!';
+    return '🌤️ Enjoy your day!';
   }
 
   toggleUnits() {
@@ -133,5 +225,4 @@ export class HomePage implements OnInit {
     });
     await toast.present();
   }
-
 }

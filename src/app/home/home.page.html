@@ -1,29 +1,24 @@
 <ion-header>
   <ion-toolbar>
-
     <ion-buttons slot="start">
       <ion-title>Weather App</ion-title>
     </ion-buttons>
-
-  
     <ion-buttons slot="end">
       <ion-button size="small" (click)="toggleUnits()">
         {{ isCelsius ? '°C' : '°F' }}
       </ion-button>
-
       <ion-button size="small" (click)="toggleTheme()">
         <ion-icon [name]="isDarkMode ? 'moon' : 'sunny'"></ion-icon>
       </ion-button>
-
       <ion-button size="small" (click)="toggleAlerts()">
         <ion-icon [name]="alertsEnabled ? 'notifications' : 'notifications-off'"></ion-icon>
       </ion-button>
     </ion-buttons>
-
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" [ngClass]="backgroundClass">
+
 
   <ion-searchbar
     [formControl]="searchControl"
@@ -32,47 +27,62 @@
     (ionChange)="searchWeather()">
   </ion-searchbar>
 
+
   <div *ngIf="currentWeather" class="weather-info">
     <h2>{{ currentWeather.name }}</h2>
     <h1>{{ currentWeather.main.temp }} {{ isCelsius ? '°C' : '°F' }}</h1>
     <p>Humidity: {{ currentWeather.main.humidity }}%</p>
     <p>Wind: {{ currentWeather.wind.speed }} {{ isCelsius ? 'm/s' : 'mph' }}</p>
+    <img [src]="currentWeather.flagUrl" style="height: 24px; margin: 8px auto;">
+    <p>{{ currentWeather.advice }}</p>
+    <p>🌅 Sunrise: {{ currentWeather.sunrise }}</p>
+    <p>🌇 Sunset: {{ currentWeather.sunset }}</p>
 
     <ion-card *ngIf="alertsEnabled && currentWeather.weather[0]?.description?.includes('storm')">
       <ion-card-header color="danger">
-        Severe Weather Alert!
+        ⚠️ Severe Weather Alert!
       </ion-card-header>
     </ion-card>
   </div>
 
+
+  <h3 style="text-align: center;">Hourly Forecast (Grouped)</h3>
+  <ng-container *ngFor="let group of hourlyGroups">
+    <h4 style="margin-left: 10px;">{{ group.period }}</h4>
+    <div class="scroll-wrapper">
+      <div class="scroll-row">
+        <div class="hourly-card" *ngFor="let item of group.data">
+          <img class="hourly-icon" src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
+          <div class="hourly-info">
+            <strong>{{ item.localTime }}</strong>
+            <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }}</p>
+            <p>{{ item.weather[0].description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ion-button expand="block" fill="outline" (click)="loadMoreHourly()" *ngIf="canLoadMoreHours()">
+    Load More Hours
+  </ion-button>
+
+ 
   <h3 style="text-align: center; margin-top: 20px;">5-Day Forecast</h3>
+<div class="forecast-scroll-wrapper">
+  <div class="forecast-list">
+    <ion-card class="forecast-card" *ngFor="let item of forecast" [ngClass]="getForecastColor(item.weather[0].main)">
+      <ion-card-content class="card-flex forecast-animate">
+        <img class="forecast-icon" src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
+        <div>
+          <h2>{{ item.dt_txt | date: 'EEEE, MMM d' }}</h2>
+          <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</div>
 
-  <ion-list>
-    <ion-item *ngFor="let item of forecast">
-      <ion-avatar slot="start">
-        <img src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
-      </ion-avatar>
-
-      <ion-label>
-        <h2>{{ item.dt_txt }}</h2>
-        <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
-
-  <h3 style="text-align: center; margin-top: 20px;">Hourly Forecast (Today)</h3>
-
-  <ion-list>
-    <ion-item *ngFor="let item of hourlyForecast">
-      <ion-avatar slot="start">
-        <img src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
-      </ion-avatar>
-
-      <ion-label>
-        <h2>{{ item.dt_txt.split(' ')[1] }}</h2>
-        <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+  
 
 </ion-content>

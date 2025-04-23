@@ -1,81 +1,216 @@
-/* SAFE TOP for Status Bar */
-ion-header {
-  padding-top: env(safe-area-inset-top);
+:host {
+  display: block;
+  height: 100%;
+  --ion-background-color: var(--bg-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  animation: fadeInBody 0.8s ease-in-out;
 }
 
-/* Toolbar Design */
+/* === ANIMATIONS === */
+@keyframes fadeInBody {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInSlide {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === TOOLBAR === */
 ion-toolbar {
-  --background: #124734;
-  --color: #e0f2f1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-/* Title Text */
-ion-title {
+  --background: transparent;
+  --color: white;
   font-weight: bold;
-  letter-spacing: 1px;
-  font-size: 20px;
 }
 
-/* Top Buttons Style */
-ion-button {
-  font-size: 12px;
+ion-content {
+  --background: transparent;
+  padding-bottom: 100px;
 }
 
-
-/* Search Bar Style */
+/* === SEARCH BAR === */
 ion-searchbar {
-  --background: #1d4e3f;
-  --color: #e0f2f1;
-  border-radius: 10px;
-  margin-bottom: 10px;
+  --background: rgba(255, 255, 255, 0.1);
+  --color: #fff;
+  --placeholder-color: #ccc;
+  --icon-color: #fff;
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  margin-top: 10px;
 }
 
-/* Current Weather Display */
+/* === WEATHER INFO BOX === */
 .weather-info {
   text-align: center;
-  margin-top: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.5s ease;
+
+  h1 {
+    font-size: 64px;
+    margin: 0;
+    font-weight: 300;
+  }
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  p {
+    margin: 4px 0;
+    color: #e0e0e0;
+  }
 }
 
-h1, h2, h3, p {
-  color: #e0f2f1;
+/* === HOURLY CARDS === */
+.scroll-wrapper {
+  overflow-x: auto;
+  padding: 0 10px;
+}
+
+.scroll-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.hourly-card {
+  flex: 0 0 auto;
+  width: 160px;
+  padding: 12px;
+  background: #ff5252;
+  color: #fff;
+  border-radius: 14px;
   text-align: center;
-  margin: 5px 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+  animation: fadeInSlide 0.4s ease-in;
 }
 
-/* List Cards for Forecast */
-ion-list {
-  background: #1d4e3f;
-  border-radius: 15px;
-  padding: 10px;
-  margin-top: 15px;
+.hourly-card:hover {
+  transform: scale(1.05);
 }
 
+.hourly-icon {
+  height: 48px;
+  margin-bottom: 6px;
+}
+
+.hourly-info p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* === FORECAST SCROLLING === */
+.forecast-scroll-wrapper {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px 10px;
+  margin-bottom: 20px;
+}
+
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.forecast-card {
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  backdrop-filter: blur(6px);
+  animation: fadeInSlide 0.6s ease;
+}
+
+.card-flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.forecast-icon {
+  height: 48px;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+/* === WEATHER COLOR THEMES === */
+.card-sunny {
+  background: #f9d423;
+  color: #333;
+}
+.card-cloudy {
+  background: #d7d7d7;
+  color: #1c1c1c;
+}
+.card-rain {
+  background: #4a90e2;
+  color: #fff;
+}
+.card-thunder {
+  background: #616161;
+  color: #fff;
+}
+.card-snow {
+  background: #e0f7fa;
+  color: #333;
+}
+.card-default {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* === BACKGROUND THEMES === */
+.bg-clear   { --bg-color: linear-gradient(to top, #56ccf2, #2f80ed); }
+.bg-cloudy  { --bg-color: linear-gradient(to top, #bdc3c7, #2c3e50); }
+.bg-rain    { --bg-color: linear-gradient(to top, #4b6cb7, #182848); }
+.bg-snow    { --bg-color: linear-gradient(to top, #e0eafc, #cfdef3); }
+.bg-thunder { --bg-color: linear-gradient(to top, #283e51, #485563); }
+.default-bg { --bg-color: linear-gradient(to top, #0f2027, #203a43, #2c5364); }
+
+/* === LIST ITEM FALLBACK (if still used) === */
 ion-item {
-  --background: transparent;
-  color: #e0f2f1;
+  --background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(6px);
+  margin: 6px 0;
+  border-radius: 12px;
+  color: white;
 }
 
-/* Weather Icon Size */
 ion-avatar img {
-  width: 50px;
-  height: 50px;
+  border-radius: 50%;
 }
 
-/* Alert Card */
-ion-card-header {
-  color: #ff8a80;
-  font-weight: bold;
-  text-align: center;
+ion-button {
+  margin-top: 12px;
+  --background: rgba(255, 255, 255, 0.1);
+  --color: white;
+  border-radius: 8px;
 }
 
-/* Toggle Style */
-ion-toggle {
-  --handle-background-checked: #4caf50;
-  --handle-background: #ccc;
-  --track-background-checked: #2e7d32;
+/* === RESPONSIVE TWEAKS === */
+@media screen and (max-width: 768px) {
+  .weather-info h1 {
+    font-size: 48px;
+  }
+  .weather-info h2 {
+    font-size: 20px;
+  }
+  ion-item h2 {
+    font-size: 16px;
+  }
+  ion-item p {
+    font-size: 14px;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
