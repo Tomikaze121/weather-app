@@ -3,6 +3,9 @@
     <ion-buttons slot="start">
       <ion-title>Weather App</ion-title>
     </ion-buttons>
+    <ion-button size="small" fill="outline" (click)="toggleTimeFormat()">
+      {{ timeFormat24 ? 'Switch to 12h' : 'Switch to 24h' }}
+    </ion-button>
     <ion-buttons slot="end">
       <ion-button size="small" (click)="toggleUnits()">
         {{ isCelsius ? '°C' : '°F' }}
@@ -35,8 +38,13 @@
     <p>Wind: {{ currentWeather.wind.speed }} {{ isCelsius ? 'm/s' : 'mph' }}</p>
     <img [src]="currentWeather.flagUrl" style="height: 24px; margin: 8px auto;">
     <p>{{ currentWeather.advice }}</p>
-    <p>🌅 Sunrise: {{ currentWeather.sunrise }}</p>
-    <p>🌇 Sunset: {{ currentWeather.sunset }}</p>
+    <div class="sun-time">
+      🌅 Sunrise: {{ currentWeather.sunrise }}
+    </div>
+    <div class="sun-time">
+      🌇 Sunset: {{ currentWeather.sunset }}
+    </div>
+    <p>🕒 Timezone: {{ currentWeather.tz }}</p>
 
     <ion-card *ngIf="alertsEnabled && currentWeather.weather[0]?.description?.includes('storm')">
       <ion-card-header color="danger">

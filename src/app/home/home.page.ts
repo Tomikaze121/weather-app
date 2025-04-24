@@ -25,7 +25,7 @@ export class HomePage implements OnInit {
   hourlyGroups: { period: string, data: WeatherItem[] }[] = [];
   hourPage = 1;
   hourLimit = 8;
-
+  timeFormat24 = true;
   isCelsius = true;
   alertsEnabled = true;
   isDarkMode = false;
@@ -85,39 +85,60 @@ export class HomePage implements OnInit {
   }
 
   async loadWeather(lat: number, lon: number) {
-    const loader = await this.loadingCtrl.create({ message: 'Loading weather...', spinner: 'crescent' });
+    const loader = await this.loadingCtrl.create({
+      message: 'Loading weather...',
+      spinner: 'crescent'
+    });
     await loader.present();
-
+  
     const online = await this.weatherService.isOnline();
-
+  
     if (online) {
       try {
+        // Get weather and forecast data
         this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon, this.unitType).toPromise();
         this.currentWeather.flagUrl = `https://flagcdn.com/48x36/${this.currentWeather.sys.country.toLowerCase()}.png`;
         this.currentWeather.advice = this.generateAdvice(this.currentWeather);
         this.backgroundClass = this.getBackgroundClass(this.currentWeather.weather[0].main);
-
-        this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000 + this.currentWeather.timezone * 1000)
-          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000 + this.currentWeather.timezone * 1000)
-          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+  
+        // Gikuha ang sakto na timezone name from TimeZoneDB
+        const tz = await this.weatherService.getTimeZone(lat, lon);
+        this.currentWeather.tz = tz;
+  
+        // Format sunrise/sunset in the city's local time
+        this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: !this.timeFormat24,
+          timeZone: tz
+        });
+  
+        this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: !this.timeFormat24,
+          timeZone: tz
+        });
+  
+        // Get forecast
         const forecastData = await this.weatherService.getForecastByCoords(lat, lon, this.unitType).toPromise() as { list: WeatherItem[] };
         this.forecast = forecastData.list.filter(item => item.dt_txt.includes('12:00:00'));
-
         this.hourlyForecast = forecastData.list;
         this.hourPage = 1;
         this.updateHourlyPage();
-
+  
+        // Cache all
         await this.weatherService.cacheWeatherData('lastWeatherData', {
           currentWeather: this.currentWeather,
           forecast: this.forecast,
           hourlyForecast: this.hourlyForecast
         });
-
+  
       } catch (err) {
+        console.error('Weather load error:', err);
         this.showToast('Failed to load weather data.');
       }
+  
     } else {
       const cached = await this.weatherService.getCachedWeatherData('lastWeatherData');
       if (cached) {
@@ -130,9 +151,10 @@ export class HomePage implements OnInit {
         this.showToast('Offline Mode: No Cached Data');
       }
     }
-
+  
     await loader.dismiss();
   }
+  
 
   getForecastColor(main: string): string {
     switch (main.toLowerCase()) {
@@ -178,6 +200,11 @@ export class HomePage implements OnInit {
     return flat.length < this.hourlyForecast.length;
   }
 
+  toggleTimeFormat() {
+    this.timeFormat24 = !this.timeFormat24;
+    this.loadWeatherByCurrentLocation(); // refresh display with new format
+  }
+
   getBackgroundClass(main: string): string {
     switch (main.toLowerCase()) {
       case 'clear': return 'bg-clear';
@@ -199,6 +226,7 @@ export class HomePage implements OnInit {
     return '🌤️ Enjoy your day!';
   }
 
+  
   toggleUnits() {
     this.isCelsius = !this.isCelsius;
     this.unitType = this.isCelsius ? 'metric' : 'imperial';

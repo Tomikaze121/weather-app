@@ -23,6 +23,12 @@ export class WeatherService {
     return status.connected;
   }
 
+  getTimeZone(lat: number, lon: number): Promise<string> {
+    const key = '0EDM36IVU7V1';
+    const url = `http://api.timezonedb.com/v2.1/get-time-zone?key=${key}&format=json&by=position&lat=${lat}&lng=${lon}`;
+    return this.http.get<any>(url).toPromise().then(res => res.zoneName);
+  }
+  
   getWeatherByCoords(lat: number, lon: number, unit: string) {
     return this.http.get(`${this.apiUrl}weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=${unit}`).pipe(timeout(10000));
   }
