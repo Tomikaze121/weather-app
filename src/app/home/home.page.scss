@@ -6,6 +6,21 @@
   animation: fadeInBody 0.8s ease-in-out;
 }
 
+/* === THEME-AWARE TEXT COLORS === */
+.weather-info,
+.forecast-card,
+.hourly-card {
+  color: var(--text-color, #fff);
+}
+
+:host-context([color-theme="dark"]) {
+  --text-color: #ffffff;
+}
+
+:host-context([color-theme="light"]) {
+  --text-color: #1e1e1e;
+}
+
 /* === ANIMATIONS === */
 @keyframes fadeInBody {
   from { opacity: 0; transform: translateY(20px); }
@@ -17,10 +32,15 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
 /* === TOOLBAR === */
 ion-toolbar {
   --background: transparent;
-  --color: white;
+  --color: var(--text-color);
   font-weight: bold;
 }
 
@@ -32,9 +52,9 @@ ion-content {
 /* === SEARCH BAR === */
 ion-searchbar {
   --background: rgba(255, 255, 255, 0.1);
-  --color: #fff;
+  --color: var(--text-color);
   --placeholder-color: #ccc;
-  --icon-color: #fff;
+  --icon-color: var(--text-color);
   backdrop-filter: blur(6px);
   border-radius: 12px;
   margin-top: 10px;
@@ -64,7 +84,6 @@ ion-searchbar {
   }
   p {
     margin: 4px 0;
-    color: #e0e0e0;
   }
 }
 
@@ -85,7 +104,6 @@ ion-searchbar {
   width: 160px;
   padding: 12px;
   background: #ff5252;
-  color: #fff;
   border-radius: 14px;
   text-align: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -113,6 +131,7 @@ ion-searchbar {
   overflow-y: auto;
   padding: 4px 10px;
   margin-bottom: 20px;
+  padding-bottom: 80px;
 }
 
 .forecast-list {
@@ -174,13 +193,12 @@ ion-searchbar {
 .bg-thunder { --bg-color: linear-gradient(to top, #283e51, #485563); }
 .default-bg { --bg-color: linear-gradient(to top, #0f2027, #203a43, #2c5364); }
 
-/* === LIST ITEM FALLBACK (if still used) === */
+/* === BUTTON & LIST STYLES === */
 ion-item {
   --background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(6px);
   margin: 6px 0;
   border-radius: 12px;
-  color: white;
 }
 
 ion-avatar img {
@@ -190,7 +208,7 @@ ion-avatar img {
 ion-button {
   margin-top: 12px;
   --background: rgba(255, 255, 255, 0.1);
-  --color: white;
+  --color: var(--text-color);
   border-radius: 8px;
 }
 
@@ -208,9 +226,4 @@ ion-button {
   ion-item p {
     font-size: 14px;
   }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
 }
