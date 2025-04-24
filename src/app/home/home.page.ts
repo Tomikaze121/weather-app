@@ -90,55 +90,82 @@ export class HomePage implements OnInit {
       spinner: 'crescent'
     });
     await loader.present();
-  
+
     const online = await this.weatherService.isOnline();
-  
+
     if (online) {
       try {
-        // Get weather and forecast data
         this.currentWeather = await this.weatherService.getWeatherByCoords(lat, lon, this.unitType).toPromise();
         this.currentWeather.flagUrl = `https://flagcdn.com/48x36/${this.currentWeather.sys.country.toLowerCase()}.png`;
         this.currentWeather.advice = this.generateAdvice(this.currentWeather);
         this.backgroundClass = this.getBackgroundClass(this.currentWeather.weather[0].main);
-  
-        // Gikuha ang sakto na timezone name from TimeZoneDB
-        const tz = await this.weatherService.getTimeZone(lat, lon);
-        this.currentWeather.tz = tz;
-  
-        // Format sunrise/sunset in the city's local time
-        this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: !this.timeFormat24,
-          timeZone: tz
-        });
-  
-        this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: !this.timeFormat24,
-          timeZone: tz
-        });
-  
-        // Get forecast
+
+        try {
+          const tz = await this.weatherService.getTimeZone(lat, lon);
+          const now = new Date();
+          const currentTime = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24,
+            timeZone: tz
+          });
+          this.currentWeather.tz = `${tz} (${currentTime})`;
+
+          this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24,
+            timeZone: tz
+          });
+
+          this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24,
+            timeZone: tz
+          });
+
+        } catch (tzError) {
+          console.warn('⚠️ TimeZone fetch failed. Using local device time instead.', tzError);
+
+          this.currentWeather.sunrise = new Date(this.currentWeather.sys.sunrise * 1000).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24
+          });
+
+          this.currentWeather.sunset = new Date(this.currentWeather.sys.sunset * 1000).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24
+          });
+
+          const fallbackNow = new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: !this.timeFormat24
+          });
+
+          this.currentWeather.tz = `Local Time (${fallbackNow})`;
+        }
+
         const forecastData = await this.weatherService.getForecastByCoords(lat, lon, this.unitType).toPromise() as { list: WeatherItem[] };
         this.forecast = forecastData.list.filter(item => item.dt_txt.includes('12:00:00'));
         this.hourlyForecast = forecastData.list;
         this.hourPage = 1;
         this.updateHourlyPage();
-  
-        // Cache all
+
         await this.weatherService.cacheWeatherData('lastWeatherData', {
           currentWeather: this.currentWeather,
           forecast: this.forecast,
           hourlyForecast: this.hourlyForecast
         });
-  
+
       } catch (err) {
         console.error('Weather load error:', err);
         this.showToast('Failed to load weather data.');
       }
-  
+
     } else {
       const cached = await this.weatherService.getCachedWeatherData('lastWeatherData');
       if (cached) {
@@ -151,10 +178,9 @@ export class HomePage implements OnInit {
         this.showToast('Offline Mode: No Cached Data');
       }
     }
-  
+
     await loader.dismiss();
   }
-  
 
   getForecastColor(main: string): string {
     switch (main.toLowerCase()) {
@@ -166,7 +192,7 @@ export class HomePage implements OnInit {
       default: return 'card-default';
     }
   }
-  
+
   updateHourlyPage() {
     const start = 0;
     const end = this.hourPage * this.hourLimit;
@@ -202,7 +228,7 @@ export class HomePage implements OnInit {
 
   toggleTimeFormat() {
     this.timeFormat24 = !this.timeFormat24;
-    this.loadWeatherByCurrentLocation(); // refresh display with new format
+    this.loadWeatherByCurrentLocation(); 
   }
 
   getBackgroundClass(main: string): string {
@@ -226,7 +252,6 @@ export class HomePage implements OnInit {
     return '🌤️ Enjoy your day!';
   }
 
-  
   toggleUnits() {
     this.isCelsius = !this.isCelsius;
     this.unitType = this.isCelsius ? 'metric' : 'imperial';
