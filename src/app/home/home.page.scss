@@ -6,19 +6,48 @@
   animation: fadeInBody 0.8s ease-in-out;
 }
 
-/* === THEME-AWARE TEXT COLORS === */
-.weather-info,
-.forecast-card,
-.hourly-card {
-  color: var(--text-color, #fff);
-}
-
+/* === THEME TOKEN DEFINITIONS === */
 :host-context([color-theme="dark"]) {
   --text-color: #ffffff;
+  --item-bg: rgba(255, 255, 255, 0.08);
+  --button-bg: rgba(255, 255, 255, 0.12);
 }
 
 :host-context([color-theme="light"]) {
   --text-color: #1e1e1e;
+  --item-bg: rgba(0, 0, 0, 0.05);
+  --button-bg: rgba(0, 0, 0, 0.05);
+}
+
+/* === UNIVERSAL TEXT COLOR === */
+.weather-info,
+.forecast-card,
+.hourly-card,
+.period-label,
+ion-card-title,
+ion-card-content,
+ion-item,
+ion-button,
+.sun-time,
+ion-label,
+ion-icon {
+  color: var(--text-color);
+}
+
+/* === ITEM & BUTTON THEME FIXES === */
+ion-item {
+  --background: var(--item-bg);
+  backdrop-filter: blur(6px);
+  margin: 6px 0;
+  border-radius: 12px;
+  color: var(--text-color);
+}
+
+ion-button {
+  --background: var(--button-bg);
+  --color: var(--text-color);
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 /* === ANIMATIONS === */
@@ -35,6 +64,11 @@
 @keyframes slideUp {
   from { transform: translateY(30px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes glowFade {
+  from { opacity: 0.6; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* === TOOLBAR === */
@@ -87,45 +121,69 @@ ion-searchbar {
   }
 }
 
-/* === HOURLY CARDS === */
-.scroll-wrapper {
-  overflow-x: auto;
-  padding: 0 10px;
+/* === SUNRISE/SUNSET === */
+.sun-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 15px;
+  animation: glowFade 2.5s ease-in-out infinite alternate;
 }
 
-.scroll-row {
+/* === HOURLY CARDS === */
+.horizontal-scroll-wrapper {
   display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   gap: 12px;
-  flex-wrap: nowrap;
+  padding: 8px 10px;
+  margin-bottom: 10px;
 }
 
 .hourly-card {
   flex: 0 0 auto;
-  width: 160px;
-  padding: 12px;
-  background: #ff5252;
-  border-radius: 14px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  min-width: 160px;
+  scroll-snap-align: start;
   transition: transform 0.3s ease;
   animation: fadeInSlide 0.4s ease-in;
 }
 
-.hourly-card:hover {
-  transform: scale(1.05);
+.card-period-AM {
+  background: linear-gradient(135deg, #fefcea, #f1da36);
+  color: #222;
+  animation: riseFade 0.9s ease forwards;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(255, 203, 65, 0.5);
 }
 
-.hourly-icon {
-  height: 48px;
-  margin-bottom: 6px;
+.card-period-PM {
+  background: linear-gradient(135deg, #2c3e50, #4ca1af);
+  color: #f0f0f0;
+  animation: setFade 0.9s ease forwards;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.hourly-info p {
-  font-size: 14px;
-  margin: 0;
+@keyframes riseFade {
+  0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* === FORECAST SCROLLING === */
+@keyframes setFade {
+  0% { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+ion-card.card-period-AM:hover,
+ion-card.card-period-PM:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+/* === 5-DAY FORECAST === */
 .forecast-scroll-wrapper {
   max-height: 60vh;
   overflow-y: auto;
@@ -159,31 +217,13 @@ ion-searchbar {
   flex-shrink: 0;
 }
 
-/* === WEATHER COLOR THEMES === */
-.card-sunny {
-  background: #f9d423;
-  color: #333;
-}
-.card-cloudy {
-  background: #d7d7d7;
-  color: #1c1c1c;
-}
-.card-rain {
-  background: #4a90e2;
-  color: #fff;
-}
-.card-thunder {
-  background: #616161;
-  color: #fff;
-}
-.card-snow {
-  background: #e0f7fa;
-  color: #333;
-}
-.card-default {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-}
+/* === FORECAST COLORS === */
+.card-sunny     { background: #f9d423; color: #333; }
+.card-cloudy    { background: #d7d7d7; color: #1c1c1c; }
+.card-rain      { background: #4a90e2; color: #fff; }
+.card-thunder   { background: #616161; color: #fff; }
+.card-snow      { background: #e0f7fa; color: #333; }
+.card-default   { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
 /* === BACKGROUND THEMES === */
 .bg-clear   { --bg-color: linear-gradient(to top, #56ccf2, #2f80ed); }
@@ -193,57 +233,99 @@ ion-searchbar {
 .bg-thunder { --bg-color: linear-gradient(to top, #283e51, #485563); }
 .default-bg { --bg-color: linear-gradient(to top, #0f2027, #203a43, #2c5364); }
 
-/* === BUTTON & LIST STYLES === */
-ion-item {
-  --background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(6px);
-  margin: 6px 0;
-  border-radius: 12px;
+/* === FIXED COLOR SETTINGS PANEL === */
+.settings-side-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 280px;
+  background: #ffffff; 
+  color: #000000;       
+  z-index: 9999;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-ion-avatar img {
-  border-radius: 50%;
+.settings-side-drawer.show {
+  transform: translateX(0);
+  opacity: 1;
 }
 
-ion-button {
-  margin-top: 12px;
-  --background: rgba(255, 255, 255, 0.1);
-  --color: var(--text-color);
-  border-radius: 8px;
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-/* === RESPONSIVE TWEAKS === */
-@media screen and (max-width: 768px) {
-  .weather-info h1 {
-    font-size: 48px;
-  }
-  .weather-info h2 {
-    font-size: 20px;
-  }
-  ion-item h2 {
-    font-size: 16px;
-  }
-  ion-item p {
-    font-size: 14px;
-  }
+.settings-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.sun-time {
+.settings-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* === FORCE BLACK TEXT / ICONS INSIDE SETTINGS === */
+.settings-side-drawer ion-item,
+.settings-side-drawer ion-label,
+.settings-side-drawer ion-button,
+.settings-side-drawer ion-icon {
+  --background: transparent;
+  --color: #000000;
+  color: #000000 !important;
+}
+
+
+/* === MISC STYLES === */
+.period-label {
+  margin: 16px 10px 6px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-color);
+}
+
+ion-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.toolbar-title-with-settings {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 15px;
-  animation: glowFade 2.5s ease-in-out infinite alternate;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 10px;
 }
 
-@keyframes glowFade {
-  from {
-    opacity: 0.6;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.settings-icon-btn {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  font-size: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .weather-info h1 { font-size: 48px; }
+  .weather-info h2 { font-size: 20px; }
+  ion-item h2      { font-size: 16px; }
+  ion-item p       { font-size: 14px; }
 }

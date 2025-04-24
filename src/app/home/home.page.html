@@ -1,28 +1,17 @@
 <ion-header>
   <ion-toolbar>
-    <ion-buttons slot="start">
+    <div class="toolbar-title-with-settings">
       <ion-title>Weather App</ion-title>
-    </ion-buttons>
-    <ion-button size="small" fill="outline" (click)="toggleTimeFormat()">
-      {{ timeFormat24 ? 'Switch to 12h' : 'Switch to 24h' }}
-    </ion-button>
-    <ion-buttons slot="end">
-      <ion-button size="small" (click)="toggleUnits()">
-        {{ isCelsius ? '°C' : '°F' }}
+      <ion-button fill="clear" size="small" (click)="toggleSettings()" class="settings-icon-btn">
+        <ion-icon name="settings-outline" class="settings-icon"></ion-icon>
       </ion-button>
-      <ion-button size="small" (click)="toggleTheme()">
-        <ion-icon [name]="isDarkMode ? 'moon' : 'sunny'"></ion-icon>
-      </ion-button>
-      <ion-button size="small" (click)="toggleAlerts()">
-        <ion-icon [name]="alertsEnabled ? 'notifications' : 'notifications-off'"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+    </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding" [ngClass]="backgroundClass">
 
-
+  <!-- Search Bar -->
   <ion-searchbar
     [formControl]="searchControl"
     placeholder="Search city..."
@@ -30,7 +19,7 @@
     (ionChange)="searchWeather()">
   </ion-searchbar>
 
-
+  <!-- Current Weather -->
   <div *ngIf="currentWeather" class="weather-info">
     <h2>{{ currentWeather.name }}</h2>
     <h1>{{ currentWeather.main.temp }} {{ isCelsius ? '°C' : '°F' }}</h1>
@@ -38,36 +27,30 @@
     <p>Wind: {{ currentWeather.wind.speed }} {{ isCelsius ? 'm/s' : 'mph' }}</p>
     <img [src]="currentWeather.flagUrl" style="height: 24px; margin: 8px auto;">
     <p>{{ currentWeather.advice }}</p>
-    <div class="sun-time">
-      🌅 Sunrise: {{ currentWeather.sunrise }}
-    </div>
-    <div class="sun-time">
-      🌇 Sunset: {{ currentWeather.sunset }}
-    </div>
+    <div class="sun-time">🌅 Sunrise: {{ currentWeather.sunrise }}</div>
+    <div class="sun-time">🌇 Sunset: {{ currentWeather.sunset }}</div>
     <p>🕒 Timezone: {{ currentWeather.tz }}</p>
 
     <ion-card *ngIf="alertsEnabled && currentWeather.weather[0]?.description?.includes('storm')">
-      <ion-card-header color="danger">
-        ⚠️ Severe Weather Alert!
-      </ion-card-header>
+      <ion-card-header color="danger">⚠️ Severe Weather Alert!</ion-card-header>
     </ion-card>
   </div>
 
-
-  <h3 style="text-align: center;">Hourly Forecast</h3>
+  <!-- Hourly Forecast -->
   <ng-container *ngFor="let group of hourlyGroups">
-    <h4 style="margin-left: 10px;">{{ group.period }}</h4>
-    <div class="scroll-wrapper">
-      <div class="scroll-row">
-        <div class="hourly-card" *ngFor="let item of group.data">
-          <img class="hourly-icon" src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
-          <div class="hourly-info">
-            <strong>{{ item.localTime }}</strong>
-            <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }}</p>
-            <p>{{ item.weather[0].description }}</p>
-          </div>
-        </div>
-      </div>
+    <h4 class="period-label">{{ group.period }}</h4>
+    <div class="horizontal-scroll-wrapper">
+      <ion-card
+        *ngFor="let item of group.data"
+        [ngClass]="group.period.includes('AM') ? 'card-period-AM' : 'card-period-PM'"
+        class="hourly-card"
+      >
+        <ion-card-content>
+          <img src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png" />
+          <p style="margin: 8px 0 4px; font-weight: bold;">{{ item.localTime }}</p>
+          <p>{{ item.main.temp }}° {{ isCelsius ? 'C' : 'F' }} | {{ item.weather[0].description }}</p>
+        </ion-card-content>
+      </ion-card>
     </div>
   </ng-container>
 
@@ -75,22 +58,63 @@
     Load More Hours
   </ion-button>
 
- 
+  <!-- 5-Day Forecast -->
   <h3 style="text-align: center; margin-top: 20px;">5-Day Forecast</h3>
-<div class="forecast-scroll-wrapper">
-  <div class="forecast-list">
-    <ion-card class="forecast-card" *ngFor="let item of forecast" [ngClass]="getForecastColor(item.weather[0].main)">
-      <ion-card-content class="card-flex forecast-animate">
-        <img class="forecast-icon" src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
-        <div>
-          <h2>{{ item.dt_txt | date: 'EEEE, MMM d' }}</h2>
-          <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
-        </div>
-      </ion-card-content>
-    </ion-card>
+  <div class="forecast-scroll-wrapper">
+    <div class="forecast-list">
+      <ion-card
+        class="forecast-card"
+        *ngFor="let item of forecast"
+        [ngClass]="getForecastColor(item.weather[0].main)"
+      >
+        <ion-card-content class="card-flex forecast-animate">
+          <img class="forecast-icon" src="https://openweathermap.org/img/wn/{{ item.weather[0].icon }}@2x.png">
+          <div>
+            <h2>{{ item.dt_txt | date: 'EEEE, MMM d' }}</h2>
+            <p>{{ item.main.temp }} {{ isCelsius ? '°C' : '°F' }} | {{ item.weather[0].description }}</p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
   </div>
-</div>
 
-  
+  <!-- Backdrop & Floating Settings Panel -->
+  <div class="settings-backdrop" [class.show]="showSettings" (click)="closeSettings()"></div>
 
+  <div class="settings-side-drawer" [class.show]="showSettings">
+    <div class="settings-header">
+      <h3>⚙️ Settings</h3>
+      <ion-button fill="clear" size="small" (click)="closeSettings()">
+        <ion-icon slot="icon-only" name="close-outline" class="settings-icon"></ion-icon>
+      </ion-button>
+    </div>
+
+    <ion-item>
+      <ion-label>Temperature Unit</ion-label>
+      <ion-button size="small" (click)="toggleUnits()">
+        {{ isCelsius ? '°C' : '°F' }}
+      </ion-button>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Theme</ion-label>
+      <ion-button size="small" (click)="toggleTheme()">
+        <ion-icon [name]="isDarkMode ? 'moon' : 'sunny'" class="settings-icon"></ion-icon>
+      </ion-button>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Alerts</ion-label>
+      <ion-button size="small" (click)="toggleAlerts()">
+        <ion-icon [name]="alertsEnabled ? 'notifications' : 'notifications-off'" class="settings-icon"></ion-icon>
+      </ion-button>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Time Format</ion-label>
+      <ion-button size="small" (click)="toggleTimeFormat()">
+        {{ timeFormat24 ? '12h' : '24h' }}
+      </ion-button>
+    </ion-item>
+  </div>
 </ion-content>

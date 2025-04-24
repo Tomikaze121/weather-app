@@ -31,6 +31,7 @@ export class HomePage implements OnInit {
   isDarkMode = false;
   unitType = 'metric';
   backgroundClass = 'default-bg';
+  showSettings = false;
 
   constructor(
     private weatherService: WeatherService,
@@ -252,6 +253,14 @@ export class HomePage implements OnInit {
     return '🌤️ Enjoy your day!';
   }
 
+  toggleSettings() {
+    this.showSettings = !this.showSettings;
+  }
+  
+  closeSettings() {
+    this.showSettings = false;
+  }
+  
   toggleUnits() {
     this.isCelsius = !this.isCelsius;
     this.unitType = this.isCelsius ? 'metric' : 'imperial';
